@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- STATUS -->
+<div class="status-bar {% if online %}status-online{% else %}status-offline{% endif %}">
+    <span>
+        {% if online %}
+            <i class="fas fa-wifi"></i> Conectado - Dados sincronizados
+        {% else %}
+            <i class="fas fa-wifi-slash"></i> Modo Offline - Dados salvos localmente
+        {% endif %}
+    </span>
+    {% if not online %}
+        <a href="/sincronizar" class="btn-sync">
+            <i class="fas fa-sync"></i> Sincronizar agora
+        </a>
+    {% endif %}
+</div>
+
+<!-- CARDS DE ESTATÍSTICAS -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card-stats green">
+            <div class="icon">🐂</div>
+            <div class="numero">{{ total }}</div>
+            <div class="label">Total de Animais</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-stats blue">
+            <div class="icon">📊</div>
+            <div class="numero">{{ total_movimentacoes }}</div>
+            <div class="label">Movimentações</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-stats orange">
+            <div class="icon">♀️</div>
+            <div class="numero">{{ total_femeas }}</div>
+            <div class="label">Fêmeas</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card-stats purple">
+            <div class="icon">♂️</div>
+            <div class="numero">{{ total_machos }}</div>
+            <div class="label">Machos</div>
+        </div>
+    </div>
+</div>
+
+<!-- CATEGORIAS -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card-dashboard">
+            <h3 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-female" style="color: #1976D2;"></i> Fêmeas
+            </h3>
+            <hr style="border-color: #e8f0e8;">
+            {% for c in categorias %}
+                {% if c[0] in ["Matrizes", "Novilhas", "Bezerras"] %}
+                <div class="categoria-item">
+                    <span class="nome">{{ c[0] }}</span>
+                    <span class="quantidade">{{ c[1] }}</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card-dashboard">
+            <h3 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-male" style="color: #F57C00;"></i> Machos
+            </h3>
+            <hr style="border-color: #e8f0e8;">
+            {% for c in categorias %}
+                {% if c[0] in ["Touros", "Garrotes", "Bezerros"] %}
+                <div class="categoria-item">
+                    <span class="nome">{{ c[0] }}</span>
+                    <span class="quantidade">{{ c[1] }}</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ÚLTIMAS MOVIMENTAÇÕES -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card-dashboard">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+                <h3 style="color: #1B5E20; font-weight: 600; font-size: 18px; margin: 0;">
+                    <i class="fas fa-clock"></i> Últimas movimentações
+                </h3>
+                <div class="btn-group-custom">
+                    <a href="/movimentacao" class="btn-primary-custom" style="padding: 8px 18px; font-size: 13px;">
+                        <i class="fas fa-plus"></i> Nova Movimentação
+                    </a>
+                    <a href="/historico" class="btn-outline-custom" style="padding: 8px 18px; font-size: 13px;">
+                        <i class="fas fa-list"></i> Ver Histórico
+                    </a>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Categoria</th>
+                            <th style="text-align: center;">Qtd</th>
+                            <th>Data</th>
+                            <th>Usuário</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in ultimas %}
+                        <tr>
+                            <td>
+                                <span class="badge-tipo 
+                                    {% if 'Transferência' in m[0] %}
+                                        style="background: #E8EAF6; color: #3F51B5;"
+                                    {% elif m[0] == 'Nascimento' %}badge-nascimento
+                                    {% elif m[0] == 'Compra' %}badge-compra
+                                    {% elif m[0] == 'Venda' %}badge-venda
+                                    {% elif m[0] == 'Morte' %}badge-morte
+                                    {% elif m[0] == 'Abate' %}badge-abate
+                                    {% endif %}">
+                                    {% if 'Transferência' in m[0] %}🔄
+                                    {% elif m[0] == 'Nascimento' %}🐣
+                                    {% elif m[0] == 'Compra' %}🟢
+                                    {% elif m[0] == 'Venda' %}🔴
+                                    {% elif m[0] == 'Morte' %}💀
+                                    {% elif m[0] == 'Abate' %}🔪
+                                    {% endif %}
+                                    {% if 'Transferência' in m[0] %}
+                                        Progressão
+                                    {% else %}
+                                        {{ m[0] }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ m[1] }}</td>
+                            <td style="text-align: center; font-weight: 600;">{{ m[2] }}</td>
+                            <td>{{ m[3] }}</td>
+                            <td>{{ m[4] if m[4] else '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted" style="padding: 30px;">
+                                <i class="fas fa-inbox" style="font-size: 30px; display: block; margin-bottom: 10px;"></i>
+                                Nenhuma movimentação registrada
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

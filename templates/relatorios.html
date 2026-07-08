@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card-dashboard">
+    <h2><i class="fas fa-chart-bar" style="color: #1B5E20;"></i> Relatórios</h2>
+    <p class="subtitle">Visão completa do seu rebanho</p>
+    
+    <!-- ========== FILTROS ========== -->
+    <div class="filtros" style="background: #f8fbf8; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e8f0e8;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+            <h5 style="color: #1B5E20; font-weight: 600; margin: 0;">
+                <i class="fas fa-filter"></i> Filtrar Relatórios
+            </h5>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="/exportar/relatorio_csv{% if data_inicio %}?data_inicio={{ data_inicio }}{% endif %}{% if data_fim %}&data_fim={{ data_fim }}{% endif %}{% if categoria_filtro %}&categoria={{ categoria_filtro }}{% endif %}" 
+                   class="btn-warning-custom" style="padding: 8px 18px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="/exportar/relatorio_pdf{% if data_inicio %}?data_inicio={{ data_inicio }}{% endif %}{% if data_fim %}&data_fim={{ data_fim }}{% endif %}{% if categoria_filtro %}&categoria={{ categoria_filtro }}{% endif %}" 
+                   class="btn-danger-custom" style="padding: 8px 18px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+            </div>
+        </div>
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-calendar-alt"></i> Data Início</label>
+                <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-calendar-alt"></i> Data Fim</label>
+                <input type="date" name="data_fim" class="form-control" value="{{ data_fim }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-tags"></i> Categoria</label>
+                <select name="categoria" class="form-select">
+                    <option value="">Todas</option>
+                    {% for c in categorias_lista %}
+                    <option value="{{ c }}" {% if categoria_filtro == c %}selected{% endif %}>
+                        {{ c }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn-primary-custom" style="padding: 10px 24px;">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <a href="/relatorios" class="btn-outline-custom" style="padding: 10px 24px; text-decoration: none;">
+                    <i class="fas fa-undo"></i> Limpar
+                </a>
+            </div>
+        </form>
+        <div class="mt-2 text-muted" style="font-size: 12px;">
+            <i class="fas fa-info-circle"></i> Dica: Deixe as datas em branco para ver todas as movimentações
+        </div>
+    </div>
+    
+    <!-- ========== ESTATÍSTICAS RÁPIDAS ========== -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card-stats green" style="padding: 15px;">
+                <div class="numero" style="font-size: 32px;">{{ total_movimentacoes }}</div>
+                <div class="label">Total de Movimentações</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-stats blue" style="padding: 15px;">
+                <div class="numero" style="font-size: 32px;">{{ categorias|sum(attribute=1) }}</div>
+                <div class="label">Total de Animais</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-stats orange" style="padding: 15px;">
+                <div class="numero" style="font-size: 32px;">{{ movimentacoes_por_tipo|length }}</div>
+                <div class="label">Tipos de Movimentação</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MOVIMENTAÇÕES FILTRADAS (AGORA AQUI EM CIMA) ========== -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card-dashboard">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+                <h3 style="color: #1B5E20; font-weight: 600; font-size: 18px; margin: 0;">
+                    <i class="fas fa-list"></i> Movimentações Filtradas
+                    {% if data_inicio or data_fim or categoria_filtro %}
+                        <span style="font-size: 13px; font-weight: 400; color: #666;">
+                            (com filtros aplicados)
+                        </span>
+                    {% endif %}
+                </h3>
+                <span style="background: #e8f5e9; padding: 4px 14px; border-radius: 20px; font-weight: 600; color: #1B5E20; font-size: 14px;">
+                    {{ movimentacoes_filtradas|length }} registros
+                </span>
+            </div>
+            
+            <div class="table-container">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Categoria</th>
+                            <th style="text-align: center;">Sexo</th>
+                            <th style="text-align: center;">Qtd</th>
+                            <th>Data</th>
+                            <th>Usuário</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in movimentacoes_filtradas %}
+                        <tr>
+                            <td>
+                                {% if m.is_transferencia %}
+                                    <span class="badge-tipo" style="background: #E8EAF6; color: #3F51B5; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                        🔄 {{ m.tipo }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge-tipo 
+                                        {% if m.tipo == 'Nascimento' %}badge-nascimento
+                                        {% elif m.tipo == 'Compra' %}badge-compra
+                                        {% elif m.tipo == 'Venda' %}badge-venda
+                                        {% elif m.tipo == 'Morte' %}badge-morte
+                                        {% elif m.tipo == 'Abate' %}badge-abate
+                                        {% endif %}">
+                                        {% if m.tipo == 'Nascimento' %}🐣
+                                        {% elif m.tipo == 'Compra' %}🟢
+                                        {% elif m.tipo == 'Venda' %}🔴
+                                        {% elif m.tipo == 'Morte' %}💀
+                                        {% elif m.tipo == 'Abate' %}🔪
+                                        {% endif %}
+                                        {{ m.tipo }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if m.is_transferencia %}
+                                    <span style="font-weight: 600; color: #1B5E20;">
+                                        <span style="color: #C62828;">{{ m.origem }}</span>
+                                        <i class="fas fa-arrow-right" style="color: #3F51B5; margin: 0 5px;"></i>
+                                        <span style="color: #2E7D32;">{{ m.destino }}</span>
+                                    </span>
+                                    <br>
+                                    <small style="color: #888; font-size: 11px;">
+                                        <i class="fas fa-info-circle"></i> Progressão de Fase
+                                    </small>
+                                {% else %}
+                                    {{ m.categoria }}
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                {% if m.sexo == "Macho" %}♂️
+                                {% elif m.sexo == "Fêmea" %}♀️
+                                {% else %}-
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center; font-weight: 600;">{{ m.quantidade }}</td>
+                            <td>{{ m.data }}</td>
+                            <td>{{ m.usuario if m.usuario else '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted" style="padding: 30px;">
+                                <i class="fas fa-inbox" style="font-size: 30px; display: block; margin-bottom: 10px;"></i>
+                                Nenhuma movimentação encontrada com os filtros aplicados
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Informação sobre o período filtrado -->
+            {% if data_inicio or data_fim or categoria_filtro %}
+            <div class="mt-3 text-muted" style="font-size: 13px; background: #f5f8f5; padding: 10px 15px; border-radius: 8px;">
+                <i class="fas fa-filter"></i> 
+                Filtros aplicados: 
+                {% if data_inicio %} <strong>Início:</strong> {{ data_inicio }}{% endif %}
+                {% if data_fim %} <strong>Fim:</strong> {{ data_fim }}{% endif %}
+                {% if categoria_filtro %} <strong>Categoria:</strong> {{ categoria_filtro }}{% endif %}
+                {% if not data_inicio and not data_fim and not categoria_filtro %} Nenhum filtro aplicado{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- ========== DISTRIBUIÇÃO POR CATEGORIA ========== -->
+    <div class="col-md-6">
+        <div class="card-dashboard">
+            <h3 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-tags"></i> Distribuição por Categoria
+            </h3>
+            <hr style="border-color: #e8f0e8;">
+            {% for c in categorias %}
+            <div class="categoria-item">
+                <span class="nome">{{ c[0] }}</span>
+                <span class="quantidade">{{ c[1] }}</span>
+            </div>
+            {% endfor %}
+            <div class="categoria-item total">
+                <span class="nome">TOTAL</span>
+                <span class="quantidade">{{ categorias|sum(attribute=1) }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== MOVIMENTAÇÕES POR TIPO ========== -->
+    <div class="col-md-6">
+        <div class="card-dashboard">
+            <h3 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-exchange-alt"></i> Movimentações por Tipo
+            </h3>
+            <hr style="border-color: #e8f0e8;">
+            {% for m in movimentacoes_por_tipo %}
+            <div class="categoria-item">
+                <span class="nome">
+                    {% if 'Progressão' in m[0] %}
+                        🔄
+                    {% elif m[0] == "Compra" %}🟢
+                    {% elif m[0] == "Venda" %}🔴
+                    {% elif m[0] == "Nascimento" %}🐣
+                    {% elif m[0] == "Morte" %}💀
+                    {% elif m[0] == "Abate" %}🔪
+                    {% endif %}
+                    {{ m[0] }}
+                </span>
+                <span class="quantidade">{{ m[1] }}</span>
+            </div>
+            {% else %}
+            <p class="text-center text-muted" style="padding: 20px;">
+                <i class="fas fa-info-circle"></i> Nenhuma movimentação registrada
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ========== LOGS DE ACESSO ========== -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card-dashboard">
+            <h3 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-user-clock"></i> Relatório de Acesso dos Usuários
+            </h3>
+            <p class="text-muted" style="font-size: 13px;">Últimos acessos e atividades registradas no sistema</p>
+            
+            <div class="table-container">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>IP</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs_acesso %}
+                        <tr>
+                            <td>
+                                <strong>{{ log[0] }}</strong>
+                                {% if log[0] == 'admin' %}
+                                    <span class="badge-admin" style="font-size: 10px;">Admin</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if 'Login' in log[1] %}
+                                    <span style="color: #2E7D32;">🟢 {{ log[1] }}</span>
+                                {% elif 'Logout' in log[1] %}
+                                    <span style="color: #C62828;">🔴 {{ log[1] }}</span>
+                                {% elif 'Movimentação' in log[1] %}
+                                    <span style="color: #1565C0;">📝 {{ log[1] }}</span>
+                                {% elif 'Transferência' in log[1] %}
+                                    <span style="color: #3F51B5;">🔄 {{ log[1] }}</span>
+                                {% elif 'adicionou' in log[1] or 'removeu' in log[1] or 'alterou' in log[1] %}
+                                    <span style="color: #6A1B9A;">👥 {{ log[1] }}</span>
+                                {% else %}
+                                    {{ log[1] }}
+                                {% endif %}
+                            </td>
+                            <td>{{ log[2] }}</td>
+                            <td>{{ log[3] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted" style="padding: 30px;">
+                                <i class="fas fa-inbox" style="font-size: 30px; display: block; margin-bottom: 10px;"></i>
+                                Nenhum log de acesso registrado
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

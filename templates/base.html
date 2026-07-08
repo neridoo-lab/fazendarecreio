@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fazenda Recreio - Sistema de Rebanho</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- MENU SUPERIOR -->
+<nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fazenda Recreio" style="max-height: 45px; margin-right: 12px; border-radius: 8px;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+            <span style="display: none;">🏡</span>
+            Fazenda Recreio
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuNav" 
+                style="border-color: rgba(255,255,255,0.3);">
+            <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="menuNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                        <i class="fas fa-chart-pie"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/movimentacao' %}active{% endif %}" href="/movimentacao">
+                        <i class="fas fa-plus-circle"></i> Movimentação
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/historico' %}active{% endif %}" href="/historico">
+                        <i class="fas fa-history"></i> Histórico
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/relatorios' %}active{% endif %}" href="/relatorios">
+                        <i class="fas fa-chart-bar"></i> Relatórios
+                    </a>
+                </li>
+                
+                {% if session.get('tipo') == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/cadastro_inicial' %}active{% endif %}" href="/cadastro_inicial">
+                        <i class="fas fa-edit"></i> Cadastro Inicial
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/admin/usuarios' %}active{% endif %}" href="/admin/usuarios">
+                        <i class="fas fa-users-cog"></i> Usuários
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+            
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="user-info" style="color: rgba(255,255,255,0.9); font-size: 14px; padding: 6px 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    <i class="fas fa-user-circle"></i>
+                    <strong>{{ session.get('nome', 'Usuário') }}</strong>
+                    {% if session.get('tipo') == 'admin' %}
+                        <span class="badge-admin">Admin</span>
+                    {% else %}
+                        <span class="badge-funcionario">Funcionário</span>
+                    {% endif %}
+                </span>
+                
+                <div class="dropdown d-inline">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 8px; padding: 8px 16px;">
+                        <i class="fas fa-file-export"></i> Exportar
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                        <li><a class="dropdown-item" href="/exportar/csv"><i class="fas fa-file-csv" style="color: #F57C00;"></i> Exportar CSV</a></li>
+                        <li><a class="dropdown-item" href="/exportar/pdf"><i class="fas fa-file-pdf" style="color: #D32F2F;"></i> Exportar PDF</a></li>
+                    </ul>
+                </div>
+                
+                <a href="/logout" class="btn-sair" style="background: #C62828; color: white; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 600; transition: 0.3s; text-decoration: none;">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<main class="conteudo">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

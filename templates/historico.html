@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card-dashboard">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+        <h2><i class="fas fa-history" style="color: #1B5E20;"></i> Histórico Completo</h2>
+        <span style="background: #e8f5e9; padding: 6px 16px; border-radius: 20px; font-weight: 600; color: #1B5E20;">
+            <i class="fas fa-file-alt"></i> {{ movimentacoes|length }} registros
+        </span>
+    </div>
+    
+    <!-- FILTROS -->
+    <div class="filtros">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-tag"></i> Tipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    {% for t in tipos %}
+                    <option value="{{ t }}" {% if filtro_tipo == t %}selected{% endif %}>
+                        {{ t }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-tags"></i> Categoria</label>
+                <select name="categoria" class="form-select">
+                    <option value="">Todas</option>
+                    {% for c in categorias %}
+                    <option value="{{ c }}" {% if filtro_categoria == c %}selected{% endif %}>
+                        {{ c }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn-primary-custom me-2" style="padding: 10px 24px;">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <a href="/historico" class="btn-outline-custom" style="padding: 10px 24px;">
+                    <i class="fas fa-undo"></i> Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- TABELA -->
+    <div class="table-container">
+        <table class="table-modern">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th style="text-align: center;">Sexo</th>
+                    <th style="text-align: center;">Qtd</th>
+                    <th>Data</th>
+                    <th>Usuário</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movimentacoes %}
+                <tr>
+                    <td>
+                        {% if 'Transferência' in m[0] %}
+                            <span class="badge-tipo" style="background: #E8EAF6; color: #3F51B5; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                🔄 Progressão de Fase
+                            </span>
+                        {% else %}
+                            <span class="badge-tipo 
+                                {% if m[0] == 'Nascimento' %}badge-nascimento
+                                {% elif m[0] == 'Compra' %}badge-compra
+                                {% elif m[0] == 'Venda' %}badge-venda
+                                {% elif m[0] == 'Morte' %}badge-morte
+                                {% elif m[0] == 'Abate' %}badge-abate
+                                {% endif %}">
+                                {% if m[0] == 'Nascimento' %}🐣
+                                {% elif m[0] == 'Compra' %}🟢
+                                {% elif m[0] == 'Venda' %}🔴
+                                {% elif m[0] == 'Morte' %}💀
+                                {% elif m[0] == 'Abate' %}🔪
+                                {% endif %}
+                                {{ m[0] }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m[1] }}</td>
+                    <td style="text-align: center;">
+                        {% if m[2] == "Macho" %}♂️
+                        {% elif m[2] == "Fêmea" %}♀️
+                        {% else %}-
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center; font-weight: 600;">{{ m[3] }}</td>
+                    <td>{{ m[4] }}</td>
+                    <td>{{ m[5] if m[5] else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted" style="padding: 40px;">
+                        <i class="fas fa-inbox" style="font-size: 40px; display: block; margin-bottom: 15px;"></i>
+                        Nenhuma movimentação encontrada
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- AÇÕES -->
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
+        <a href="/" class="btn-primary-custom" style="padding: 10px 24px;">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <a href="/movimentacao" class="btn-success" style="padding: 10px 24px; border-radius: 10px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fas fa-plus"></i> Nova Movimentação
+        </a>
+        <a href="/exportar/csv{% if filtro_tipo %}?tipo={{ filtro_tipo }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}" 
+           class="btn-warning-custom" style="padding: 10px 24px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fas fa-file-csv"></i> CSV
+        </a>
+        <a href="/exportar/pdf{% if filtro_tipo %}?tipo={{ filtro_tipo }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}" 
+           class="btn-danger-custom" style="padding: 10px 24px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+    </div>
+</div>
+
+{% endblock %}

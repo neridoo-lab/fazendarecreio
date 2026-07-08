@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card-dashboard">
+    <h2><i class="fas fa-users-cog" style="color: #1B5E20;"></i> Gerenciar Usuários</h2>
+    <p class="subtitle">Gerencie os usuários do sistema</p>
+</div>
+
+<div class="row g-4">
+    <!-- ADICIONAR USUÁRIO -->
+    <div class="col-md-4">
+        <div class="card-dashboard">
+            <h4 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-user-plus"></i> Adicionar Usuário
+            </h4>
+            <hr style="border-color: #e8f0e8;">
+            <form method="POST" action="/admin/usuario/add">
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user"></i> Nome completo</label>
+                    <input type="text" name="nome" class="form-control" placeholder="Digite o nome completo" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user-tag"></i> Usuário (login)</label>
+                    <input type="text" name="usuario" class="form-control" placeholder="Digite o usuário" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-key"></i> Senha (mínimo 6 caracteres)</label>
+                    <input type="password" name="senha" class="form-control" placeholder="Digite a senha" required minlength="6">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user-shield"></i> Tipo</label>
+                    <select name="tipo" class="form-select">
+                        <option value="funcionario">👤 Funcionário</option>
+                        <option value="admin">⭐ Administrador</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary-custom" style="width:100%;">
+                    <i class="fas fa-plus"></i> Adicionar
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- LISTA DE USUÁRIOS -->
+    <div class="col-md-8">
+        <div class="card-dashboard">
+            <h4 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-list"></i> Lista de Usuários
+            </h4>
+            <hr style="border-color: #e8f0e8;">
+            
+            <div class="table-container">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Usuário</th>
+                            <th style="text-align: center;">Tipo</th>
+                            <th style="text-align: center;">Status</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td>{{ u[0] }}</td>
+                            <td><strong>{{ u[1] }}</strong></td>
+                            <td>{{ u[2] }}</td>
+                            <td style="text-align: center;">
+                                {% if u[3] == 'admin' %}
+                                    <span class="badge-admin">Admin</span>
+                                {% else %}
+                                    <span class="badge-funcionario">Funcionário</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                {% if u[4] == 1 %}
+                                    <span style="color: #2E7D32;">✅ Ativo</span>
+                                {% else %}
+                                    <span style="color: #C62828;">❌ Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">
+                                {% if u[3] != 'admin' %}
+                                <div style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
+                                    <button type="button" class="btn-warning-custom" style="padding: 4px 12px; font-size: 12px;" 
+                                            data-bs-toggle="modal" data-bs-target="#modalSenha{{ u[0] }}">
+                                        🔑 Senha
+                                    </button>
+                                    <a href="/admin/usuario/delete/{{ u[0] }}" 
+                                       class="btn-danger-custom" style="padding: 4px 12px; font-size: 12px; text-decoration: none;"
+                                       onclick="return confirm('Tem certeza que deseja remover este usuário?')">
+                                        🗑️ Remover
+                                    </a>
+                                </div>
+                                
+                                <!-- MODAL SENHA -->
+                                <div class="modal fade" id="modalSenha{{ u[0] }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content" style="border-radius: 16px;">
+                                            <form method="POST" action="/admin/usuario/alterar_senha">
+                                                <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                                                    <h5 class="modal-title" style="color: #1B5E20;">
+                                                        <i class="fas fa-key"></i> Alterar Senha - {{ u[1] }}
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="id_usuario" value="{{ u[0] }}">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Nova Senha (mínimo 6 caracteres)</label>
+                                                        <input type="password" name="nova_senha" class="form-control" required minlength="6" placeholder="Digite a nova senha">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer" style="border-top: none;">
+                                                    <button type="button" class="btn-outline-custom" data-bs-dismiss="modal" style="padding: 8px 20px;">
+                                                        Cancelar
+                                                    </button>
+                                                    <button type="submit" class="btn-primary-custom" style="padding: 8px 20px;">
+                                                        <i class="fas fa-save"></i> Salvar
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                    <span style="color: #888; font-size: 12px;">Administrador principal</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LOGS -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card-dashboard">
+            <h4 style="color: #1B5E20; font-weight: 600; font-size: 18px;">
+                <i class="fas fa-history"></i> Logs de Acesso
+            </h4>
+            <p class="text-muted" style="font-size: 13px;">Últimos 50 registros</p>
+            
+            <div class="table-container">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>IP</th>
+                            <th>Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log[0] }}</td>
+                            <td>{{ log[1] }}</td>
+                            <td>{{ log[2] }}</td>
+                            <td>{{ log[3] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted" style="padding: 20px;">
+                                <i class="fas fa-inbox"></i> Nenhum log registrado
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
