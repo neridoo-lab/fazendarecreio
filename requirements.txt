@@ -4,3 +4,4 @@ flask-login
 supabase
 python-dotenv
 gunicorn
+SQLAlchemy==1.3.24
