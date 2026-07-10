@@ -75,7 +75,7 @@
         }
 
         /* ===== CARD DE LOGIN ===== */
-.login-card {
+        .login-card {
     position: relative;
     z-index: 2;
     background: rgba(255, 255, 255, 100); /* fundo branco com transparência */
@@ -90,8 +90,8 @@
 }
 
  .logo-img {
-    width: 200px !important;
-    max-width: 200px !important;
+    width: 250px !important;
+    max-width: 250px !important;
     height: auto !important;
     max-height: none !important;
     display: block !important;
@@ -164,7 +164,7 @@
     <!-- CARD DE LOGIN -->
     <div class="login-card">
         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fazenda Recreio" class="logo-img">
-        
+        <p class="subtitle">Sistema de Gerenciamento de Rebanho</p>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
