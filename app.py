@@ -931,6 +931,18 @@ def admin_alterar_senha():
     flash("Senha alterada com sucesso!", "success")
     return redirect(url_for("admin_usuarios"))
 
+@app.route('/resetar-dados')
+def resetar_dados():
+    import sqlite3
+    conn = sqlite3.connect('rebanho.db')
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM movimentacoes')
+    cursor.execute('DELETE FROM categorias')
+    cursor.execute('UPDATE sqlite_sequence SET seq = 0 WHERE name = "movimentacoes"')
+    cursor.execute('UPDATE sqlite_sequence SET seq = 0 WHERE name = "categorias"')
+    conn.commit()
+    conn.close()
+    return "✅ Dados zerados!"
 
 if __name__ == "__main__":
     import socket
