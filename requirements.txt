@@ -1,8 +1,7 @@
-Flask==2.3.3
-flask-sqlalchemy==3.1.1
-flask-login==0.6.2
-supabase==2.3.0
-python-dotenv==1.0.0
-gunicorn==21.2.0
-reportlab==4.0.4
-SQLAlchemy==1.4.46
+Flask
+flask-sqlalchemy
+flask-login
+supabase
+python-dotenv
+gunicorn
+reportlab
