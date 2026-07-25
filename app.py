@@ -292,29 +292,63 @@ def movimentacao():
 def cadastro_inicial():
     conn = connect()
     cursor = conn.cursor()
+    
     if request.method == "POST":
-        categorias = ["Matrizes", "Novilhas", "Bezerras", "Touros", "Garrotes", "Bezerros"]
-        for categoria in categorias:
-            quantidade = int(request.form[categoria])
-            if quantidade < 0:
-                flash(f"Quantidade negativa para {categoria}!", "danger")
+        try:
+            # Busca todas as categorias existentes
+            cursor.execute("SELECT nome FROM categorias ORDER BY id")
+            categorias_existentes = [c[0] for c in cursor.fetchall()]
+            
+            if not categorias_existentes:
+                flash("Nenhuma categoria encontrada no banco de dados!", "danger")
                 conn.close()
                 return redirect(url_for("cadastro_inicial"))
-            cursor.execute("""
-                UPDATE categorias
-                SET quantidade=?
-                WHERE nome=?
-            """, (quantidade, categoria))
-        conn.commit()
-        conn.close()
-        registrar_log(session.get('usuario'), "Cadastro inicial atualizado", request.remote_addr)
-        flash("Cadastro inicial atualizado com sucesso!", "success")
-        return redirect(url_for("dashboard"))
+            
+            atualizadas = 0
+            for categoria in categorias_existentes:
+                if categoria in request.form:
+                    try:
+                        valor = request.form[categoria].strip()
+                        if valor == '':
+                            quantidade = 0
+                        else:
+                            quantidade = int(valor)
+                            
+                        if quantidade < 0:
+                            flash(f"Quantidade negativa para {categoria}! Use valores positivos.", "danger")
+                            conn.close()
+                            return redirect(url_for("cadastro_inicial"))
+                        
+                        cursor.execute("""
+                            UPDATE categorias
+                            SET quantidade = ?
+                            WHERE nome = ?
+                        """, (quantidade, categoria))
+                        atualizadas += 1
+                    except ValueError:
+                        flash(f"Valor inválido para {categoria}! Use números inteiros.", "danger")
+                        conn.close()
+                        return redirect(url_for("cadastro_inicial"))
+                else:
+                    flash(f"⚠️ Campo '{categoria}' não encontrado no formulário. Mantido valor atual.", "warning")
+            
+            conn.commit()
+            conn.close()
+            
+            registrar_log(session.get('usuario'), f"Cadastro inicial atualizado ({atualizadas} categorias)", request.remote_addr)
+            flash(f"Cadastro inicial atualizado com sucesso! ({atualizadas} categorias)", "success")
+            return redirect(url_for("dashboard"))
+            
+        except Exception as e:
+            conn.close()
+            flash(f"Erro ao atualizar: {str(e)}", "danger")
+            return redirect(url_for("cadastro_inicial"))
+    
+    # GET - mostra o formulário
     cursor.execute("SELECT nome, quantidade FROM categorias ORDER BY id")
     dados = cursor.fetchall()
     conn.close()
     return render_template("cadastro_inicial.html", dados=dados)
-
 
 @app.route("/historico")
 @login_required

@@ -10,7 +10,21 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 def connect():
-    return sqlite3.connect(DB_NAME)
+    import time
+    for tentativa in range(5):
+        try:
+            conn = sqlite3.connect(DB_NAME, timeout=30)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA busy_timeout = 30000")
+            conn.execute("PRAGMA synchronous = NORMAL")
+            return conn
+        except sqlite3.OperationalError as e:
+            if "database is locked" in str(e) and tentativa < 4:
+                print(f"⏳ Banco bloqueado, tentando novamente ({tentativa+1}/5)...")
+                time.sleep(2)
+            else:
+                raise e
+    raise sqlite3.OperationalError("Database is locked after multiple attempts")
 
 
 def init_db():
@@ -74,9 +88,11 @@ def seed_categorias():
             ("Matrizes", 0),
             ("Novilhas", 0),
             ("Bezerras", 0),
-            ("Touros", 0),
-            ("Garrotes", 0),
             ("Bezerros", 0),
+            ("Garrotes", 0),
+            ("Boi", 0),
+            ("Touros", 0),
+
         ]
         cursor.executemany(
             "INSERT INTO categorias (nome, quantidade) VALUES (?, ?)",
@@ -141,49 +157,57 @@ def registrar_log(usuario, acao, ip='0.0.0.0'):
 
 def sincronizar_movimentacoes():
     """Envia movimentações não sincronizadas para o Supabase"""
-    conn = connect()
-    cursor = conn.cursor()
+    try:
+        conn = connect()
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT id, tipo, categoria, sexo, quantidade, usuario, data
-        FROM movimentacoes
-        WHERE sincronizado = 0
-        ORDER BY id
-    """)
-    movimentacoes = cursor.fetchall()
+        cursor.execute("""
+            SELECT id, tipo, categoria, sexo, quantidade, usuario, data
+            FROM movimentacoes
+            WHERE sincronizado = 0
+            ORDER BY id
+        """)
+        movimentacoes = cursor.fetchall()
 
-    if not movimentacoes:
+        if not movimentacoes:
+            conn.close()
+            return 0
+
+        enviados = 0
+        for m in movimentacoes:
+            try:
+                data = {
+                    'tipo': m[1],
+                    'categoria': m[2],
+                    'sexo': m[3],
+                    'quantidade': m[4],
+                    'usuario': m[5],
+                    'data': m[6]
+                }
+                supabase.table('movimentacoes').insert(data).execute()
+
+                cursor.execute("""
+                    UPDATE movimentacoes SET sincronizado = 1 WHERE id = ?
+                """, (m[0],))
+                enviados += 1
+            except Exception as e:
+                print(f"⚠️ Erro ao sincronizar: {e}")
+
+        conn.commit()
         conn.close()
+        return enviados
+    except Exception as e:
+        print(f"⚠️ Erro na sincronização: {e}")
         return 0
-
-    enviados = 0
-    for m in movimentacoes:
-        try:
-            data = {
-                'tipo': m[1],
-                'categoria': m[2],
-                'sexo': m[3],
-                'quantidade': m[4],
-                'usuario': m[5],
-                'data': m[6]
-            }
-            supabase.table('movimentacoes').insert(data).execute()
-
-            cursor.execute("""
-                UPDATE movimentacoes SET sincronizado = 1 WHERE id = ?
-            """, (m[0],))
-            enviados += 1
-        except Exception as e:
-            print(f"Erro ao sincronizar: {e}")
-
-    conn.commit()
-    conn.close()
-    return enviados
 
 
 def baixar_dados_nuvem():
     """Baixa dados do Supabase para o SQLite local"""
     try:
+        if not verificar_internet():
+            print("📡 Sem internet, pulando download")
+            return False
+            
         response = supabase.table('categorias').select('*').execute()
         categorias_nuvem = response.data
 
@@ -200,7 +224,7 @@ def baixar_dados_nuvem():
             conn.close()
             return True
     except Exception as e:
-        print(f"Erro ao baixar dados: {e}")
+        print(f"⚠️ Erro ao baixar dados: {e}")
         return False
     return False
 
